@@ -37,10 +37,10 @@ export default function CalculatorPage() {
   };
 
   return (
-    <div className="p-6 md:p-10" data-testid="calculator-page">
-      <div className="mb-6">
-        <h1 className="font-heading font-bold text-2xl md:text-3xl text-slate-900">RD Calculator</h1>
-        <p className="text-sm text-slate-500 mt-1">Calculate Recurring Deposit maturity amount</p>
+    <div className="p-4 sm:p-6 lg:p-10" data-testid="calculator-page">
+      <div className="mb-5 sm:mb-6">
+        <h1 className="font-heading font-bold text-xl sm:text-2xl lg:text-3xl text-slate-900">RD Calculator</h1>
+        <p className="text-xs sm:text-sm text-slate-500 mt-1">Calculate Recurring Deposit maturity amount</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-4xl">

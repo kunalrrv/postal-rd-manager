@@ -10,12 +10,21 @@ const navItems = [
   { to: '/reports', icon: FileText, label: 'Reports' },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ mobile, onNavigate }) {
   const { user, logout } = useAuth();
 
+  const handleNavClick = () => {
+    if (mobile && onNavigate) onNavigate();
+  };
+
+  const handleLogout = () => {
+    logout();
+    if (mobile && onNavigate) onNavigate();
+  };
+
   return (
-    <aside className="w-64 bg-official-blue flex flex-col h-screen shrink-0" data-testid="sidebar">
-      <div className="px-6 py-6 border-b border-white/10">
+    <aside className={`${mobile ? 'w-full' : 'w-64'} bg-official-blue flex flex-col h-screen shrink-0`} data-testid="sidebar">
+      <div className={`px-6 ${mobile ? 'pt-5 pb-4' : 'py-6'} border-b border-white/10`}>
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-lg bg-postal-red flex items-center justify-center">
             <Shield className="w-5 h-5 text-white" />
@@ -33,6 +42,7 @@ export default function Sidebar() {
             key={item.to}
             to={item.to}
             end={item.end}
+            onClick={handleNavClick}
             data-testid={`nav-${item.label.toLowerCase()}`}
             className={({ isActive }) =>
               `sidebar-link ${isActive ? 'active text-white' : 'text-blue-200'}`
@@ -55,7 +65,7 @@ export default function Sidebar() {
           </div>
         </div>
         <button
-          onClick={logout}
+          onClick={handleLogout}
           data-testid="logout-btn"
           className="sidebar-link text-blue-200 hover:text-white w-full"
         >

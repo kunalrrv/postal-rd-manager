@@ -49,29 +49,29 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="p-6 md:p-10 space-y-6" data-testid="dashboard-page">
-      <div className="flex items-center justify-between">
+    <div className="p-4 sm:p-6 lg:p-10 space-y-5 sm:space-y-6" data-testid="dashboard-page">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
-          <h1 className="font-heading font-bold text-2xl md:text-3xl text-slate-900">Dashboard</h1>
-          <p className="text-sm text-slate-500 mt-1">Overview of your RD collection status</p>
+          <h1 className="font-heading font-bold text-xl sm:text-2xl lg:text-3xl text-slate-900">Dashboard</h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">Overview of your RD collection status</p>
         </div>
-        <Badge variant="outline" className="text-xs text-slate-500 border-slate-200">
+        <Badge variant="outline" className="text-xs text-slate-500 border-slate-200 w-fit">
           <Clock className="w-3 h-3 mr-1" /> {new Date().toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}
         </Badge>
       </div>
 
       {/* Metric Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5" data-testid="metric-cards">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5" data-testid="metric-cards">
         {metricCards.map((card, idx) => (
           <div key={idx} className={`metric-card animate-fade-in-up stagger-${idx + 1}`} data-testid={`metric-${card.label.toLowerCase().replace(/\s/g, '-')}`}>
             <div className="flex items-start justify-between">
-              <div>
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">{card.label}</p>
-                <p className="text-2xl font-bold text-slate-900 mt-1 font-heading">{card.value}</p>
-                {card.sub && <p className="text-xs text-slate-400 mt-1">{card.sub}</p>}
+              <div className="min-w-0">
+                <p className="text-[10px] sm:text-xs font-medium text-slate-500 uppercase tracking-wider truncate">{card.label}</p>
+                <p className="text-lg sm:text-2xl font-bold text-slate-900 mt-1 font-heading">{card.value}</p>
+                {card.sub && <p className="text-[10px] sm:text-xs text-slate-400 mt-1">{card.sub}</p>}
               </div>
-              <div className={`w-10 h-10 rounded-lg ${card.bg} flex items-center justify-center`}>
-                <card.icon className={`w-5 h-5 ${card.color}`} />
+              <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg ${card.bg} flex items-center justify-center shrink-0`}>
+                <card.icon className={`w-4 h-4 sm:w-5 sm:h-5 ${card.color}`} />
               </div>
             </div>
           </div>
@@ -79,7 +79,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-5">
         {/* Monthly Collection Chart */}
         <Card className="lg:col-span-2 border-slate-200 shadow-sm" data-testid="monthly-chart">
           <CardHeader className="pb-2">
@@ -155,7 +155,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Tables Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-5">
         {/* Upcoming Maturity */}
         <Card className="border-slate-200 shadow-sm" data-testid="upcoming-maturity">
           <CardHeader className="pb-3">

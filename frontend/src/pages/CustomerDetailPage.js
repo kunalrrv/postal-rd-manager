@@ -63,19 +63,19 @@ export default function CustomerDetailPage() {
   if (!customer) return null;
 
   return (
-    <div className="p-6 md:p-10" data-testid="customer-detail-page">
+    <div className="p-4 sm:p-6 lg:p-10" data-testid="customer-detail-page">
       <Button variant="ghost" onClick={() => navigate('/customers')} className="mb-4 text-slate-600" data-testid="back-btn">
         <ArrowLeft className="w-4 h-4 mr-2" /> Back to Customers
       </Button>
 
       {/* Customer Info */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5 mb-5 sm:mb-6">
         <Card className="lg:col-span-2 border-slate-200 shadow-sm">
           <CardHeader className="pb-3">
-            <CardTitle className="font-heading text-xl text-slate-900">{customer.name}</CardTitle>
+            <CardTitle className="font-heading text-lg sm:text-xl text-slate-900">{customer.name}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
               <InfoItem label="Age" value={`${customer.age} years`} />
               <InfoItem label="Monthly RD" value={formatCurrency(customer.monthly_amount)} />
               <InfoItem label="Tenure" value={`${customer.tenure} Years`} />

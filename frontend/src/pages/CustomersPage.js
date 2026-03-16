@@ -110,19 +110,19 @@ export default function CustomersPage() {
   };
 
   return (
-    <div className="p-6 md:p-10" data-testid="customers-page">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+    <div className="p-4 sm:p-6 lg:p-10" data-testid="customers-page">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-5 sm:mb-6">
         <div>
-          <h1 className="font-heading font-bold text-2xl md:text-3xl text-slate-900">Customers</h1>
-          <p className="text-sm text-slate-500 mt-1">{customers.length} total customers</p>
+          <h1 className="font-heading font-bold text-xl sm:text-2xl lg:text-3xl text-slate-900">Customers</h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">{customers.length} total customers</p>
         </div>
-        <Button onClick={openAdd} data-testid="add-customer-btn" className="bg-postal-red hover:bg-postal-red-600 text-white">
+        <Button onClick={openAdd} data-testid="add-customer-btn" className="bg-postal-red hover:bg-postal-red-600 text-white w-full sm:w-auto">
           <Plus className="w-4 h-4 mr-2" /> Add Customer
         </Button>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-5">
+      <div className="flex flex-col sm:flex-row gap-3 mb-4 sm:mb-5">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <Input
@@ -215,7 +215,7 @@ export default function CustomersPage() {
 
       {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-md" data-testid="customer-dialog">
+        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-md" data-testid="customer-dialog">
           <DialogHeader>
             <DialogTitle className="font-heading">{editId ? 'Edit Customer' : 'Add New Customer'}</DialogTitle>
           </DialogHeader>

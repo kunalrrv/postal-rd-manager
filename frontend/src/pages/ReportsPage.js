@@ -76,27 +76,27 @@ export default function ReportsPage() {
   };
 
   return (
-    <div className="p-6 md:p-10" data-testid="reports-page">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+    <div className="p-4 sm:p-6 lg:p-10" data-testid="reports-page">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-5 sm:mb-6">
         <div>
-          <h1 className="font-heading font-bold text-2xl md:text-3xl text-slate-900">Reports</h1>
-          <p className="text-sm text-slate-500 mt-1">Export and print customer data</p>
+          <h1 className="font-heading font-bold text-xl sm:text-2xl lg:text-3xl text-slate-900">Reports</h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">Export and print customer data</p>
         </div>
-        <div className="flex gap-3 no-print">
-          <Button variant="outline" onClick={exportCSV} data-testid="export-csv-btn" className="text-slate-700">
-            <Download className="w-4 h-4 mr-2" /> CSV
+        <div className="flex gap-2 sm:gap-3 no-print w-full sm:w-auto">
+          <Button variant="outline" onClick={exportCSV} data-testid="export-csv-btn" className="text-slate-700 flex-1 sm:flex-initial text-xs sm:text-sm">
+            <Download className="w-4 h-4 mr-1 sm:mr-2" /> CSV
           </Button>
-          <Button variant="outline" onClick={exportPDF} data-testid="export-pdf-btn" className="text-slate-700">
-            <FileText className="w-4 h-4 mr-2" /> PDF
+          <Button variant="outline" onClick={exportPDF} data-testid="export-pdf-btn" className="text-slate-700 flex-1 sm:flex-initial text-xs sm:text-sm">
+            <FileText className="w-4 h-4 mr-1 sm:mr-2" /> PDF
           </Button>
-          <Button onClick={handlePrint} data-testid="print-btn" className="bg-postal-red hover:bg-postal-red-600 text-white">
-            <Printer className="w-4 h-4 mr-2" /> Print
+          <Button onClick={handlePrint} data-testid="print-btn" className="bg-postal-red hover:bg-postal-red-600 text-white flex-1 sm:flex-initial text-xs sm:text-sm">
+            <Printer className="w-4 h-4 mr-1 sm:mr-2" /> Print
           </Button>
         </div>
       </div>
 
       {/* Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 no-print">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-5 sm:mb-6 no-print">
         <SummaryCard label="Total Customers" value={customers.length} />
         <SummaryCard label="Total Monthly Collection" value={formatCurrency(customers.reduce((s, c) => s + c.monthly_amount, 0))} />
         <SummaryCard label="Total Deposits" value={formatCurrency(customers.reduce((s, c) => s + (c.total_deposit || 0), 0))} />

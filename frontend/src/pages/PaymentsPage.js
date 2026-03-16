@@ -66,14 +66,14 @@ export default function PaymentsPage() {
   const currentUnpaid = currentPayments.filter(p => p.status === 'Unpaid').length;
 
   return (
-    <div className="p-6 md:p-10" data-testid="payments-page">
-      <div className="mb-6">
-        <h1 className="font-heading font-bold text-2xl md:text-3xl text-slate-900">Payments</h1>
-        <p className="text-sm text-slate-500 mt-1">Track and manage monthly RD payments</p>
+    <div className="p-4 sm:p-6 lg:p-10" data-testid="payments-page">
+      <div className="mb-5 sm:mb-6">
+        <h1 className="font-heading font-bold text-xl sm:text-2xl lg:text-3xl text-slate-900">Payments</h1>
+        <p className="text-xs sm:text-sm text-slate-500 mt-1">Track and manage monthly RD payments</p>
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-5 sm:mb-6">
         <div className="metric-card">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-official-blue-50 flex items-center justify-center">
