@@ -1,0 +1,154 @@
+{
+  "identity": {
+    "name": "PostalRD Pro",
+    "persona": "The Modern Bureaucrat",
+    "tone": "Authoritative, Trustworthy, Efficient, Clean",
+    "archetype": "Swiss & High-Contrast (Modified for Government/Finance)",
+    "keywords": ["Trust", "Stability", "Precision", "Service"]
+  },
+  "typography": {
+    "font_family_heading": "Manrope",
+    "font_family_body": "Inter",
+    "h1": "text-4xl font-bold tracking-tight text-slate-900",
+    "h2": "text-3xl font-semibold tracking-tight text-slate-900",
+    "h3": "text-2xl font-semibold text-slate-800",
+    "body": "text-base font-normal text-slate-600 leading-relaxed",
+    "label": "text-sm font-medium text-slate-500 uppercase tracking-wider",
+    "mono": "font-mono text-sm text-slate-700",
+    "instructions": "Import 'Manrope' from Google Fonts. Use it for all Headings (h1-h3). Use 'Inter' for body text, inputs, and tables."
+  },
+  "colors": {
+    "primary": {
+      "name": "Postal Red",
+      "hex": "#D32F2F",
+      "tailwind": "bg-red-700 hover:bg-red-800 text-white",
+      "usage": "Primary Buttons, Critical Alerts, Branding Accents"
+    },
+    "secondary": {
+      "name": "Official Blue",
+      "hex": "#1E3A8A",
+      "tailwind": "bg-blue-900 text-white",
+      "usage": "Sidebar, Active Navigation Items, Header Accents"
+    },
+    "success": {
+      "name": "Finance Green",
+      "hex": "#059669",
+      "tailwind": "text-emerald-600 bg-emerald-50 border-emerald-200",
+      "usage": "Positive Values, Paid Status, Trends Up"
+    },
+    "warning": {
+      "name": "Alert Amber",
+      "hex": "#D97706",
+      "tailwind": "text-amber-600 bg-amber-50 border-amber-200",
+      "usage": "Pending Status, Due Soon"
+    },
+    "background": {
+      "page": "bg-slate-50",
+      "card": "bg-white",
+      "sidebar": "bg-slate-900"
+    },
+    "text": {
+      "main": "text-slate-900",
+      "muted": "text-slate-500",
+      "inverted": "text-white"
+    },
+    "border": "border-slate-200",
+    "contrast_rules": "Always ensure text on colored backgrounds meets WCAG AA standards. Use white text on Primary and Secondary backgrounds."
+  },
+  "layout": {
+    "spacing_scale": "Generous (p-6, p-8 for containers)",
+    "container_padding": "px-6 py-8 md:px-10 md:py-10",
+    "grid_system": "Bento Grid - High Density (Mode B)",
+    "sidebar_width": "w-64",
+    "card_radius": "rounded-lg",
+    "button_radius": "rounded-md",
+    "input_radius": "rounded-md"
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-red-700 hover:bg-red-800 text-white font-medium shadow-sm transition-all active:scale-95",
+      "secondary": "bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 shadow-sm transition-all",
+      "ghost": "hover:bg-slate-100 text-slate-600 hover:text-slate-900"
+    },
+    "cards": {
+      "default": "bg-white border border-slate-200 shadow-sm rounded-lg p-6 hover:shadow-md transition-shadow",
+      "interactive": "cursor-pointer hover:border-blue-500 hover:ring-1 hover:ring-blue-500 transition-all",
+      "metric": "flex flex-col gap-2 p-6 bg-white rounded-lg border border-slate-100 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)]"
+    },
+    "inputs": {
+      "default": "flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-900 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+      "error": "border-red-500 focus-visible:ring-red-500"
+    },
+    "tables": {
+      "wrapper": "rounded-md border border-slate-200 overflow-hidden",
+      "header": "bg-slate-50 text-slate-500 uppercase text-xs font-semibold tracking-wider",
+      "row": "border-b border-slate-100 hover:bg-slate-50/50 transition-colors",
+      "cell": "p-4 text-sm text-slate-700"
+    },
+    "status_badges": {
+      "active": "inline-flex items-center rounded-full bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20",
+      "pending": "inline-flex items-center rounded-full bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20",
+      "overdue": "inline-flex items-center rounded-full bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/10",
+      "inactive": "inline-flex items-center rounded-full bg-slate-50 px-2 py-1 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-500/10"
+    }
+  },
+  "visual_enhancers": {
+    "shadows": {
+      "subtle": "shadow-[0_1px_2px_0_rgba(0,0,0,0.05)]",
+      "card": "shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)]",
+      "floating": "shadow-[0_20px_25px_-5px_rgba(0,0,0,0.1),0_10px_10px_-5px_rgba(0,0,0,0.04)]"
+    },
+    "patterns": {
+      "login_bg": "Use a subtle 'banknote' or 'guilloche' pattern SVG in the background with very low opacity (3-5%) on a slate-50 background.",
+      "dashboard_bg": "Clean Slate-50, no heavy patterns."
+    }
+  },
+  "motion": {
+    "hover": "transition-all duration-200 ease-in-out",
+    "enter": "animate-in fade-in slide-in-from-bottom-4 duration-500",
+    "reduced_motion": "motion-reduce:transition-none motion-reduce:animate-none"
+  },
+  "accessibility": {
+    "focus_ring": "focus-visible:ring-2 focus-visible:ring-blue-900 focus-visible:ring-offset-2",
+    "contrast_check": "Ensure all text meets APCA/WCAG AA standards. No light grey text on white backgrounds."
+  },
+  "charts": {
+    "library": "Recharts",
+    "colors": ["#1E3A8A", "#D32F2F", "#059669", "#D97706", "#64748B"],
+    "style": "Minimalist. Remove grid lines where possible. Use simple tooltips."
+  },
+  "image_urls": {
+    "login_hero": {
+      "url": "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&q=80&w=2000",
+      "description": "Professional accounting/finance scene, calculator, papers, clean desk",
+      "usage": "Login page side image or background overlay"
+    },
+    "empty_state": {
+      "url": "https://illustrations.popsy.co/gray/success.svg",
+      "description": "Clean, minimal illustration for empty states",
+      "usage": "Dashboard widgets when no data"
+    },
+    "user_avatar": {
+      "url": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=200",
+      "description": "Professional avatar placeholder",
+      "usage": "User profile dropdown"
+    }
+  },
+  "component_paths": {
+    "ui_lib": "/app/frontend/src/components/ui",
+    "custom_components": "/app/frontend/src/components"
+  },
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+    "Do NOT use 'Inter' for Headings. Use 'Manrope'.",
+    "Do NOT use generic purple/blue gradients. Use the specific Postal Red and Official Blue palette.",
+    "Do NOT use standard HTML tables. Use the styled Table component with 'striped' rows for readability.",
+    "Do NOT center-align dashboard text. Align numbers to the right, text to the left.",
+    "ALWAYS include 'data-testid' on interactive elements.",
+    "Use 'Lucide React' for icons.",
+    "For the Sidebar, use a solid dark blue (#1E3A8A) background with white text.",
+    "Ensure the Dashboard is 'Dense' but 'Breathable'. Use the Bento Grid Mode B.",
+    "For 'Status' columns, always use the 'Badges' defined in components section.",
+    "Format currency as '₹ 1,200.00' (Indian Rupee with commas).",
+    "Date format: 'DD MMM YYYY' (e.g., 12 Oct 2023)."
+  ]
+}
