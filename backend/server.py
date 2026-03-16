@@ -136,6 +136,88 @@ async def get_me(user=Depends(get_current_user)):
 
 # ==================== CUSTOMER ROUTES ====================
 
+@api_router.post("/customers/import")
+async def import_customers(data: dict, user=Depends(get_current_user)):
+    customers_data = data.get("customers", [])
+    if not customers_data:
+        raise HTTPException(status_code=400, detail="No customers to import")
+    results = {"success": 0, "failed": 0, "errors": []}
+    for idx, c in enumerate(customers_data):
+        try:
+            name = str(c.get("name", "")).strip()
+            age = int(c.get("age", 0))
+            monthly_amount = float(c.get("monthly_amount", 0))
+            tenure = int(c.get("tenure", 5))
+            interest_rate = float(c.get("interest_rate", 7.6))
+            start_date = str(c.get("start_date", "")).strip()
+            if not name:
+                results["failed"] += 1
+                results["errors"].append(f"Row {idx+1}: Name is required")
+                continue
+            if tenure not in [5, 10]:
+                results["failed"] += 1
+                results["errors"].append(f"Row {idx+1}: Tenure must be 5 or 10")
+                continue
+            if monthly_amount <= 0:
+                results["failed"] += 1
+                results["errors"].append(f"Row {idx+1}: Monthly amount must be positive")
+                continue
+            if not start_date:
+                results["failed"] += 1
+                results["errors"].append(f"Row {idx+1}: Start date is required")
+                continue
+            # Normalize date
+            try:
+                datetime.fromisoformat(start_date.split('T')[0])
+            except ValueError:
+                results["failed"] += 1
+                results["errors"].append(f"Row {idx+1}: Invalid date format (use YYYY-MM-DD)")
+                continue
+            maturity = calculate_rd_maturity(monthly_amount, tenure, interest_rate)
+            maturity_date = add_months(start_date, tenure * 12)
+            customer_doc = {
+                "id": str(uuid.uuid4()),
+                "name": name,
+                "age": age,
+                "monthly_amount": monthly_amount,
+                "tenure": tenure,
+                "interest_rate": interest_rate,
+                "start_date": start_date,
+                "maturity_date": maturity_date,
+                "maturity_amount": maturity["maturity_amount"],
+                "total_deposit": maturity["total_deposit"],
+                "total_interest": maturity["total_interest"],
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "created_by": user['user_id']
+            }
+            await db.customers.insert_one(customer_doc)
+            total_months = tenure * 12
+            payments = []
+            for i in range(total_months):
+                due_date_str = add_months(start_date, i)
+                due_dt = datetime.fromisoformat(due_date_str)
+                payments.append({
+                    "id": str(uuid.uuid4()),
+                    "customer_id": customer_doc['id'],
+                    "customer_name": name,
+                    "month": due_dt.month,
+                    "year": due_dt.year,
+                    "month_label": due_dt.strftime("%B %Y"),
+                    "amount_due": monthly_amount,
+                    "amount_paid": 0,
+                    "payment_date": None,
+                    "status": "Unpaid",
+                    "due_date": due_date_str
+                })
+            if payments:
+                await db.payments.insert_many(payments)
+            customer_doc.pop('_id', None)
+            results["success"] += 1
+        except Exception as e:
+            results["failed"] += 1
+            results["errors"].append(f"Row {idx+1}: {str(e)}")
+    return results
+
 @api_router.get("/customers/export/data")
 async def export_customers_data(user=Depends(get_current_user)):
     customers = await db.customers.find({}, {"_id": 0}).to_list(1000)

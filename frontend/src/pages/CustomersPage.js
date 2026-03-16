@@ -1,17 +1,17 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Search, MoreHorizontal, Pencil, Trash2, Eye, CalendarIcon, Users } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Pencil, Trash2, Eye, CalendarIcon, Users, Upload, Download, FileSpreadsheet, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { format } from 'date-fns';
 import api, { formatCurrency, formatDate } from '@/lib/api';
 import { toast } from 'sonner';
@@ -27,6 +27,12 @@ export default function CustomersPage() {
   const [editId, setEditId] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [csvRows, setCsvRows] = useState([]);
+  const [csvErrors, setCsvErrors] = useState([]);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState(null);
+  const fileInputRef = useRef(null);
   const navigate = useNavigate();
 
   const fetchCustomers = useCallback(async () => {
@@ -109,6 +115,114 @@ export default function CustomersPage() {
     }
   };
 
+  // ===== CSV Import Functions =====
+  const CSV_HEADERS = ['Name', 'Age', 'Monthly Amount', 'Tenure', 'Interest Rate', 'Start Date'];
+
+  const downloadTemplate = () => {
+    const csv = [
+      CSV_HEADERS.join(','),
+      'Rajesh Kumar,45,1000,5,7.6,2025-01-01',
+      'Priya Sharma,38,2000,10,7.6,2025-03-15',
+    ].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'rd_customers_template.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const parseCSV = (text) => {
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+    if (lines.length < 2) return { rows: [], errors: ['CSV must have a header row and at least one data row'] };
+
+    const header = lines[0].split(',').map(h => h.trim().toLowerCase());
+    const nameIdx = header.findIndex(h => h.includes('name'));
+    const ageIdx = header.findIndex(h => h.includes('age'));
+    const amountIdx = header.findIndex(h => h.includes('amount') || h.includes('monthly'));
+    const tenureIdx = header.findIndex(h => h.includes('tenure'));
+    const rateIdx = header.findIndex(h => h.includes('rate') || h.includes('interest'));
+    const dateIdx = header.findIndex(h => h.includes('date') || h.includes('start'));
+
+    if (nameIdx === -1 || amountIdx === -1 || dateIdx === -1) {
+      return { rows: [], errors: ['CSV must have Name, Monthly Amount, and Start Date columns'] };
+    }
+
+    const rows = [];
+    const errors = [];
+    for (let i = 1; i < lines.length; i++) {
+      const cols = lines[i].split(',').map(c => c.trim());
+      const row = {
+        name: cols[nameIdx] || '',
+        age: parseInt(cols[ageIdx]) || 0,
+        monthly_amount: parseFloat(cols[amountIdx]) || 0,
+        tenure: parseInt(cols[tenureIdx]) || 5,
+        interest_rate: parseFloat(cols[rateIdx]) || 7.6,
+        start_date: cols[dateIdx] || '',
+        _row: i + 1,
+        _errors: [],
+      };
+      if (!row.name) row._errors.push('Name required');
+      if (row.monthly_amount <= 0) row._errors.push('Invalid amount');
+      if (![5, 10].includes(row.tenure)) row._errors.push('Tenure must be 5 or 10');
+      if (!row.start_date || !/^\d{4}-\d{2}-\d{2}/.test(row.start_date)) row._errors.push('Date format: YYYY-MM-DD');
+      if (row._errors.length) errors.push(`Row ${i + 1}: ${row._errors.join(', ')}`);
+      rows.push(row);
+    }
+    return { rows, errors };
+  };
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.name.endsWith('.csv')) {
+      toast.error('Please select a .csv file');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const { rows, errors } = parseCSV(ev.target.result);
+      setCsvRows(rows);
+      setCsvErrors(errors);
+      setImportResult(null);
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
+  const handleImport = async () => {
+    const validRows = csvRows.filter(r => r._errors.length === 0);
+    if (!validRows.length) {
+      toast.error('No valid rows to import');
+      return;
+    }
+    setImporting(true);
+    try {
+      const payload = validRows.map(({ _row, _errors, ...rest }) => rest);
+      const res = await api.post('/customers/import', { customers: payload });
+      setImportResult(res.data);
+      if (res.data.success > 0) {
+        toast.success(`${res.data.success} customer(s) imported successfully`);
+        fetchCustomers();
+      }
+      if (res.data.failed > 0) {
+        toast.error(`${res.data.failed} row(s) failed`);
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Import failed');
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const openImportDialog = () => {
+    setCsvRows([]);
+    setCsvErrors([]);
+    setImportResult(null);
+    setImportOpen(true);
+  };
+
   return (
     <div className="p-4 sm:p-6 lg:p-10" data-testid="customers-page">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-5 sm:mb-6">
@@ -116,9 +230,14 @@ export default function CustomersPage() {
           <h1 className="font-heading font-bold text-xl sm:text-2xl lg:text-3xl text-slate-900">Customers</h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">{customers.length} total customers</p>
         </div>
-        <Button onClick={openAdd} data-testid="add-customer-btn" className="bg-postal-red hover:bg-postal-red-600 text-white w-full sm:w-auto">
-          <Plus className="w-4 h-4 mr-2" /> Add Customer
-        </Button>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <Button variant="outline" onClick={openImportDialog} data-testid="import-csv-btn" className="flex-1 sm:flex-initial text-slate-700">
+            <Upload className="w-4 h-4 mr-2" /> Import CSV
+          </Button>
+          <Button onClick={openAdd} data-testid="add-customer-btn" className="bg-postal-red hover:bg-postal-red-600 text-white flex-1 sm:flex-initial">
+            <Plus className="w-4 h-4 mr-2" /> Add Customer
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -270,6 +389,134 @@ export default function CustomersPage() {
             <Button onClick={handleSave} disabled={saving} data-testid="save-customer-btn" className="bg-postal-red hover:bg-postal-red-600 text-white">
               {saving ? 'Saving...' : editId ? 'Update' : 'Add Customer'}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* CSV Import Dialog */}
+      <Dialog open={importOpen} onOpenChange={setImportOpen}>
+        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-2xl max-h-[90vh] flex flex-col" data-testid="import-csv-dialog">
+          <DialogHeader>
+            <DialogTitle className="font-heading">Import Customers from CSV</DialogTitle>
+            <DialogDescription className="text-sm text-slate-500">
+              Upload a CSV file with customer data. Columns: Name, Age, Monthly Amount, Tenure (5 or 10), Interest Rate, Start Date (YYYY-MM-DD).
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto space-y-4 py-2">
+            {/* Actions Row */}
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button variant="outline" size="sm" onClick={downloadTemplate} data-testid="download-template-btn" className="text-slate-600">
+                <Download className="w-4 h-4 mr-2" /> Download Template
+              </Button>
+              <input ref={fileInputRef} type="file" accept=".csv" onChange={handleFileSelect} className="hidden" data-testid="csv-file-input" />
+              <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} data-testid="select-csv-btn" className="text-slate-600">
+                <FileSpreadsheet className="w-4 h-4 mr-2" /> Select CSV File
+              </Button>
+            </div>
+
+            {/* Import Result */}
+            {importResult && (
+              <div className={`rounded-lg p-3 text-sm ${importResult.failed > 0 ? 'bg-amber-50 border border-amber-200' : 'bg-emerald-50 border border-emerald-200'}`} data-testid="import-result">
+                <div className="flex items-center gap-2 font-medium mb-1">
+                  {importResult.failed > 0 ? <AlertCircle className="w-4 h-4 text-amber-600" /> : <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
+                  <span>{importResult.success} imported, {importResult.failed} failed</span>
+                </div>
+                {importResult.errors?.length > 0 && (
+                  <ul className="text-xs text-amber-700 mt-1 space-y-0.5 pl-6 list-disc">
+                    {importResult.errors.map((err, i) => <li key={i}>{err}</li>)}
+                  </ul>
+                )}
+              </div>
+            )}
+
+            {/* Validation Errors */}
+            {csvErrors.length > 0 && !importResult && (
+              <div className="rounded-lg p-3 bg-red-50 border border-red-200 text-sm" data-testid="csv-errors">
+                <div className="flex items-center gap-2 font-medium text-red-700 mb-1">
+                  <AlertCircle className="w-4 h-4" /> Validation Issues
+                </div>
+                <ul className="text-xs text-red-600 mt-1 space-y-0.5 pl-6 list-disc">
+                  {csvErrors.map((err, i) => <li key={i}>{err}</li>)}
+                </ul>
+              </div>
+            )}
+
+            {/* CSV Preview Table */}
+            {csvRows.length > 0 && !importResult && (
+              <div className="border rounded-lg overflow-hidden" data-testid="csv-preview">
+                <div className="px-3 py-2 bg-slate-50 border-b flex items-center justify-between">
+                  <span className="text-xs font-medium text-slate-600">
+                    {csvRows.length} row(s) found &middot; {csvRows.filter(r => r._errors.length === 0).length} valid
+                  </span>
+                </div>
+                <div className="overflow-x-auto max-h-[300px] overflow-y-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-slate-50 hover:bg-slate-50">
+                        <TableHead className="text-xs font-semibold text-slate-500 w-8">#</TableHead>
+                        <TableHead className="text-xs font-semibold text-slate-500">Name</TableHead>
+                        <TableHead className="text-xs font-semibold text-slate-500">Age</TableHead>
+                        <TableHead className="text-xs font-semibold text-slate-500 text-right">Monthly</TableHead>
+                        <TableHead className="text-xs font-semibold text-slate-500">Tenure</TableHead>
+                        <TableHead className="text-xs font-semibold text-slate-500">Rate</TableHead>
+                        <TableHead className="text-xs font-semibold text-slate-500">Start Date</TableHead>
+                        <TableHead className="text-xs font-semibold text-slate-500">Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {csvRows.map((row, idx) => (
+                        <TableRow key={idx} className={row._errors.length ? 'bg-red-50/50' : ''} data-testid={`csv-row-${idx}`}>
+                          <TableCell className="text-xs text-slate-400">{row._row}</TableCell>
+                          <TableCell className="text-sm text-slate-800 font-medium">{row.name || '-'}</TableCell>
+                          <TableCell className="text-sm text-slate-600">{row.age || '-'}</TableCell>
+                          <TableCell className="text-sm text-slate-700 text-right font-mono">{row.monthly_amount || '-'}</TableCell>
+                          <TableCell className="text-sm text-slate-600">{row.tenure}Y</TableCell>
+                          <TableCell className="text-sm text-slate-600">{row.interest_rate}%</TableCell>
+                          <TableCell className="text-sm text-slate-600">{row.start_date || '-'}</TableCell>
+                          <TableCell>
+                            {row._errors.length ? (
+                              <span className="badge-overdue text-[10px]" title={row._errors.join(', ')}>Error</span>
+                            ) : (
+                              <span className="badge-paid text-[10px]">Valid</span>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            )}
+
+            {/* Empty State */}
+            {csvRows.length === 0 && !importResult && (
+              <div
+                className="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center cursor-pointer hover:border-slate-300 hover:bg-slate-50/50 transition-colors"
+                onClick={() => fileInputRef.current?.click()}
+                data-testid="csv-dropzone"
+              >
+                <FileSpreadsheet className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+                <p className="text-sm font-medium text-slate-600">Click to select a CSV file</p>
+                <p className="text-xs text-slate-400 mt-1">or download the template first</p>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setImportOpen(false)} data-testid="import-cancel-btn">
+              {importResult ? 'Close' : 'Cancel'}
+            </Button>
+            {!importResult && csvRows.length > 0 && (
+              <Button
+                onClick={handleImport}
+                disabled={importing || csvRows.filter(r => r._errors.length === 0).length === 0}
+                data-testid="import-submit-btn"
+                className="bg-postal-red hover:bg-postal-red-600 text-white"
+              >
+                {importing ? 'Importing...' : `Import ${csvRows.filter(r => r._errors.length === 0).length} Customer(s)`}
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
