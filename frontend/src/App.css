@@ -1,34 +1,59 @@
-.App-logo {
-    height: 40vmin;
-    pointer-events: none;
+/* Sidebar active link */
+.sidebar-link {
+    @apply flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200;
+}
+.sidebar-link:hover {
+    @apply bg-white/10;
+}
+.sidebar-link.active {
+    @apply bg-white/15 text-white shadow-sm;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-    .App-logo {
-        animation: App-logo-spin infinite 20s linear;
-    }
+/* Metric card hover */
+.metric-card {
+    @apply bg-white rounded-lg border border-slate-100 p-6 transition-all duration-200;
+    box-shadow: 0 2px 10px -3px rgba(6, 81, 237, 0.08);
+}
+.metric-card:hover {
+    box-shadow: 0 4px 16px -4px rgba(6, 81, 237, 0.12);
 }
 
-.App-header {
-    background-color: #0f0f10;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-size: calc(10px + 2vmin);
-    color: white;
+/* Table row animation */
+.table-row-animate {
+    @apply transition-colors duration-150;
+}
+.table-row-animate:hover {
+    @apply bg-slate-50/70;
 }
 
-.App-link {
-    color: #61dafb;
+/* Status badges */
+.badge-paid {
+    @apply inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20;
+}
+.badge-unpaid {
+    @apply inline-flex items-center rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20;
+}
+.badge-overdue {
+    @apply inline-flex items-center rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/10;
 }
 
-@keyframes App-logo-spin {
+/* Entrance animation */
+@keyframes fadeInUp {
     from {
-        transform: rotate(0deg);
+        opacity: 0;
+        transform: translateY(12px);
     }
     to {
-        transform: rotate(360deg);
+        opacity: 1;
+        transform: translateY(0);
     }
 }
+.animate-fade-in-up {
+    animation: fadeInUp 0.4s ease-out forwards;
+}
+
+/* Staggered reveal */
+.stagger-1 { animation-delay: 0.05s; }
+.stagger-2 { animation-delay: 0.1s; }
+.stagger-3 { animation-delay: 0.15s; }
+.stagger-4 { animation-delay: 0.2s; }
