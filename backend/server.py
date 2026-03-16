@@ -283,18 +283,22 @@ async def update_payment(payment_id: str, update: PaymentUpdate, user=Depends(ge
     return updated
 
 @api_router.get("/payments/current-month")
-async def get_current_month_payments(user=Depends(get_current_user)):
+async def get_current_month_payments(month: int = None, year: int = None, user=Depends(get_current_user)):
     now = datetime.now(timezone.utc)
+    q_month = month if month else now.month
+    q_year = year if year else now.year
     payments = await db.payments.find(
-        {"month": now.month, "year": now.year}, {"_id": 0}
+        {"month": q_month, "year": q_year}, {"_id": 0}
     ).to_list(1000)
     return payments
 
 @api_router.get("/payments/unpaid")
-async def get_unpaid_payments(user=Depends(get_current_user)):
+async def get_unpaid_payments(month: int = None, year: int = None, user=Depends(get_current_user)):
     now = datetime.now(timezone.utc)
+    q_month = month if month else now.month
+    q_year = year if year else now.year
     payments = await db.payments.find(
-        {"status": "Unpaid", "month": now.month, "year": now.year}, {"_id": 0}
+        {"status": "Unpaid", "month": q_month, "year": q_year}, {"_id": 0}
     ).to_list(1000)
     return payments
 
