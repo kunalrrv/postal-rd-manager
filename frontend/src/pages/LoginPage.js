@@ -5,18 +5,33 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Shield, Eye, EyeOff } from 'lucide-react';
+import { Shield, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
+import api from '@/lib/api';
 
 export default function LoginPage() {
+  const [mode, setMode] = useState('login');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
+  const resetForm = () => {
+    setUsername('');
+    setPassword('');
+    setConfirmPassword('');
+    setShowPassword(false);
+  };
+
+  const switchMode = (newMode) => {
+    resetForm();
+    setMode(newMode);
+  };
+
+  const handleLogin = async (e) => {
     e.preventDefault();
     if (!username || !password) {
       toast.error('Please enter username and password');
@@ -34,9 +49,40 @@ export default function LoginPage() {
     }
   };
 
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    if (!username || !password || !confirmPassword) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+    if (username.length < 3) {
+      toast.error('Username must be at least 3 characters');
+      return;
+    }
+    if (password.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
+    if (password !== confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+    setLoading(true);
+    try {
+      await api.post('/auth/register', { username, password });
+      toast.success('Account created! Please sign in.');
+      switchMode('login');
+      setUsername(username);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Registration failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex" data-testid="login-page">
-      {/* Left side - Login Form */}
+      {/* Left side - Form */}
       <div className="flex-1 flex items-center justify-center px-6 py-12 bg-slate-50">
         <div className="w-full max-w-sm animate-fade-in-up">
           <div className="flex items-center gap-3 mb-8">
@@ -51,63 +97,151 @@ export default function LoginPage() {
 
           <Card className="border-slate-200 shadow-lg">
             <CardHeader className="pb-4">
-              <CardTitle className="font-heading text-2xl text-slate-900">Sign in</CardTitle>
-              <CardDescription className="text-slate-500">Enter your credentials to access the dashboard</CardDescription>
+              <CardTitle className="font-heading text-2xl text-slate-900">
+                {mode === 'login' ? 'Sign in' : 'Create account'}
+              </CardTitle>
+              <CardDescription className="text-slate-500">
+                {mode === 'login'
+                  ? 'Enter your credentials to access the dashboard'
+                  : 'Set up your agent account to get started'}
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="username" className="text-sm font-medium text-slate-700">Username</Label>
-                  <Input
-                    id="username"
-                    data-testid="login-username"
-                    placeholder="Enter username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    className="h-11"
-                    autoFocus
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-sm font-medium text-slate-700">Password</Label>
-                  <div className="relative">
+              {mode === 'login' ? (
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="username" className="text-sm font-medium text-slate-700">Username</Label>
                     <Input
-                      id="password"
-                      data-testid="login-password"
-                      type={showPassword ? 'text' : 'password'}
-                      placeholder="Enter password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="h-11 pr-10"
+                      id="username"
+                      data-testid="login-username"
+                      placeholder="Enter username"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      className="h-11"
+                      autoFocus
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                      data-testid="toggle-password"
-                    >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
                   </div>
-                </div>
-                <Button
-                  type="submit"
-                  data-testid="login-submit"
-                  disabled={loading}
-                  className="w-full h-11 bg-postal-red hover:bg-postal-red-600 text-white font-medium"
-                >
-                  {loading ? 'Signing in...' : 'Sign in'}
-                </Button>
-              </form>
-              <p className="mt-4 text-xs text-center text-slate-400">
-                Default: admin / admin123
-              </p>
+                  <div className="space-y-2">
+                    <Label htmlFor="password" className="text-sm font-medium text-slate-700">Password</Label>
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        data-testid="login-password"
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="Enter password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="h-11 pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                        data-testid="toggle-password"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+                  <Button
+                    type="submit"
+                    data-testid="login-submit"
+                    disabled={loading}
+                    className="w-full h-11 bg-postal-red hover:bg-postal-red-600 text-white font-medium"
+                  >
+                    {loading ? 'Signing in...' : 'Sign in'}
+                  </Button>
+                </form>
+              ) : (
+                <form onSubmit={handleRegister} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="reg-username" className="text-sm font-medium text-slate-700">Username</Label>
+                    <Input
+                      id="reg-username"
+                      data-testid="register-username"
+                      placeholder="Choose a username (min 3 chars)"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      className="h-11"
+                      autoFocus
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="reg-password" className="text-sm font-medium text-slate-700">Password</Label>
+                    <div className="relative">
+                      <Input
+                        id="reg-password"
+                        data-testid="register-password"
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="Create a password (min 6 chars)"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="h-11 pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                        data-testid="toggle-password-register"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="reg-confirm" className="text-sm font-medium text-slate-700">Confirm Password</Label>
+                    <Input
+                      id="reg-confirm"
+                      data-testid="register-confirm-password"
+                      type="password"
+                      placeholder="Re-enter your password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="h-11"
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    data-testid="register-submit"
+                    disabled={loading}
+                    className="w-full h-11 bg-postal-red hover:bg-postal-red-600 text-white font-medium"
+                  >
+                    {loading ? 'Creating account...' : 'Create Account'}
+                  </Button>
+                </form>
+              )}
+
+              <div className="mt-5 pt-4 border-t border-slate-100 text-center">
+                {mode === 'login' ? (
+                  <p className="text-sm text-slate-500">
+                    Don't have an account?{' '}
+                    <button
+                      onClick={() => switchMode('register')}
+                      data-testid="go-to-signup"
+                      className="text-postal-red font-medium hover:underline inline-flex items-center gap-1"
+                    >
+                      Sign up <ArrowRight className="w-3 h-3" />
+                    </button>
+                  </p>
+                ) : (
+                  <p className="text-sm text-slate-500">
+                    Already have an account?{' '}
+                    <button
+                      onClick={() => switchMode('login')}
+                      data-testid="go-to-login"
+                      className="text-postal-red font-medium hover:underline inline-flex items-center gap-1"
+                    >
+                      Sign in <ArrowRight className="w-3 h-3" />
+                    </button>
+                  </p>
+                )}
+              </div>
             </CardContent>
           </Card>
         </div>
       </div>
 
-      {/* Right side - Hero Image */}
+      {/* Right side - Hero */}
       <div className="hidden lg:flex flex-1 bg-official-blue relative items-center justify-center overflow-hidden">
         <div className="absolute inset-0 opacity-5">
           <div className="absolute inset-0" style={{

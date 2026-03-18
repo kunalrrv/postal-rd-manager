@@ -121,6 +121,24 @@ def calculate_rd_maturity(monthly_deposit: float, tenure_years: int, annual_rate
 
 # ==================== AUTH ROUTES ====================
 
+@api_router.post("/auth/register")
+async def register(user: UserLogin):
+    if not user.username or len(user.username) < 3:
+        raise HTTPException(status_code=400, detail="Username must be at least 3 characters")
+    if not user.password or len(user.password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+    existing = await db.users.find_one({"username": user.username})
+    if existing:
+        raise HTTPException(status_code=400, detail="Username already exists")
+    user_doc = {
+        "id": str(uuid.uuid4()),
+        "username": user.username,
+        "password": hash_password(user.password),
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.users.insert_one(user_doc)
+    return {"message": "Account created successfully", "username": user.username}
+
 @api_router.post("/auth/login")
 async def login(user: UserLogin):
     db_user = await db.users.find_one({"username": user.username}, {"_id": 0})
