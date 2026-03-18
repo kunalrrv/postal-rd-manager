@@ -38,6 +38,16 @@ class UserLogin(BaseModel):
     username: str
     password: str
 
+class UserRegister(BaseModel):
+    username: str
+    password: str
+    email: Optional[str] = None
+
+class PasswordReset(BaseModel):
+    username: str
+    email: str
+    new_password: str
+
 class CustomerCreate(BaseModel):
     name: str
     age: int
@@ -122,7 +132,7 @@ def calculate_rd_maturity(monthly_deposit: float, tenure_years: int, annual_rate
 # ==================== AUTH ROUTES ====================
 
 @api_router.post("/auth/register")
-async def register(user: UserLogin):
+async def register(user: UserRegister):
     if not user.username or len(user.username) < 3:
         raise HTTPException(status_code=400, detail="Username must be at least 3 characters")
     if not user.password or len(user.password) < 6:
@@ -130,14 +140,34 @@ async def register(user: UserLogin):
     existing = await db.users.find_one({"username": user.username})
     if existing:
         raise HTTPException(status_code=400, detail="Username already exists")
+    if user.email:
+        email_exists = await db.users.find_one({"email": user.email})
+        if email_exists:
+            raise HTTPException(status_code=400, detail="Email already registered")
     user_doc = {
         "id": str(uuid.uuid4()),
         "username": user.username,
         "password": hash_password(user.password),
+        "email": user.email or "",
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     await db.users.insert_one(user_doc)
     return {"message": "Account created successfully", "username": user.username}
+
+@api_router.post("/auth/reset-password")
+async def reset_password(data: PasswordReset):
+    if not data.username or not data.email or not data.new_password:
+        raise HTTPException(status_code=400, detail="All fields are required")
+    if len(data.new_password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+    db_user = await db.users.find_one({"username": data.username, "email": data.email})
+    if not db_user:
+        raise HTTPException(status_code=404, detail="No account found with that username and email combination")
+    await db.users.update_one(
+        {"username": data.username},
+        {"$set": {"password": hash_password(data.new_password)}}
+    )
+    return {"message": "Password reset successfully. Please sign in with your new password."}
 
 @api_router.post("/auth/login")
 async def login(user: UserLogin):
