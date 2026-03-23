@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 export default function CalculatorPage() {
   const [monthlyDeposit, setMonthlyDeposit] = useState('1000');
   const [tenure, setTenure] = useState('5');
-  const [rate, setRate] = useState('7.6');
+  const [rate, setRate] = useState('6.7');
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
 

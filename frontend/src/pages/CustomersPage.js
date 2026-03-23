@@ -16,7 +16,7 @@ import { format } from 'date-fns';
 import api, { formatCurrency, formatDate } from '@/lib/api';
 import { toast } from 'sonner';
 
-const emptyForm = { name: '', age: '', monthly_amount: '', tenure: '5', interest_rate: '7.6', start_date: null };
+const emptyForm = { name: '', age: '', monthly_amount: '', tenure: '5', interest_rate: '6.7', start_date: null };
 
 export default function CustomersPage() {
   const [customers, setCustomers] = useState([]);
@@ -121,8 +121,8 @@ export default function CustomersPage() {
   const downloadTemplate = () => {
     const csv = [
       CSV_HEADERS.join(','),
-      'Rajesh Kumar,45,1000,5,7.6,2025-01-01',
-      'Priya Sharma,38,2000,10,7.6,2025-03-15',
+      'Rajesh Kumar,45,1000,5,6.7,2025-01-01',
+      'Priya Sharma,38,2000,10,6.7,2025-03-15',
     ].join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -158,7 +158,7 @@ export default function CustomersPage() {
         age: parseInt(cols[ageIdx]) || 0,
         monthly_amount: parseFloat(cols[amountIdx]) || 0,
         tenure: parseInt(cols[tenureIdx]) || 5,
-        interest_rate: parseFloat(cols[rateIdx]) || 7.6,
+        interest_rate: parseFloat(cols[rateIdx]) || 6.7,
         start_date: cols[dateIdx] || '',
         _row: i + 1,
         _errors: [],

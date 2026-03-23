@@ -4,6 +4,7 @@ import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Layout from "@/components/Layout";
+import CustomerLayout from "@/components/CustomerLayout";
 import LoginPage from "@/pages/LoginPage";
 import DashboardPage from "@/pages/DashboardPage";
 import CustomersPage from "@/pages/CustomersPage";
@@ -11,6 +12,8 @@ import CustomerDetailPage from "@/pages/CustomerDetailPage";
 import PaymentsPage from "@/pages/PaymentsPage";
 import CalculatorPage from "@/pages/CalculatorPage";
 import ReportsPage from "@/pages/ReportsPage";
+import CustomerAccountsPage from "@/pages/CustomerAccountsPage";
+import CustomerDashboardPage from "@/pages/CustomerDashboardPage";
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -28,10 +31,26 @@ function ProtectedRoute({ children }) {
   return children;
 }
 
-function PublicRoute({ children }) {
-  const { user, loading } = useAuth();
+function AdminRoute({ children }) {
+  const { user, loading, isAdmin } = useAuth();
   if (loading) return null;
-  if (user) return <Navigate to="/" replace />;
+  if (!user) return <Navigate to="/login" replace />;
+  if (!isAdmin) return <Navigate to="/my-account" replace />;
+  return children;
+}
+
+function CustomerRoute({ children }) {
+  const { user, loading, isCustomer } = useAuth();
+  if (loading) return null;
+  if (!user) return <Navigate to="/login" replace />;
+  if (!isCustomer) return <Navigate to="/" replace />;
+  return children;
+}
+
+function PublicRoute({ children }) {
+  const { user, loading, isCustomer } = useAuth();
+  if (loading) return null;
+  if (user) return <Navigate to={isCustomer ? "/my-account" : "/"} replace />;
   return children;
 }
 
@@ -42,13 +61,19 @@ function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
-            <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+            {/* Admin routes */}
+            <Route path="/" element={<AdminRoute><Layout /></AdminRoute>}>
               <Route index element={<DashboardPage />} />
               <Route path="customers" element={<CustomersPage />} />
               <Route path="customers/:id" element={<CustomerDetailPage />} />
               <Route path="payments" element={<PaymentsPage />} />
               <Route path="calculator" element={<CalculatorPage />} />
               <Route path="reports" element={<ReportsPage />} />
+              <Route path="customer-accounts" element={<CustomerAccountsPage />} />
+            </Route>
+            {/* Customer routes */}
+            <Route path="/my-account" element={<CustomerRoute><CustomerLayout /></CustomerRoute>}>
+              <Route index element={<CustomerDashboardPage />} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

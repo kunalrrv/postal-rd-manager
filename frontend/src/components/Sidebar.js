@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { LayoutDashboard, Users, CreditCard, Calculator, FileText, LogOut, Shield, Download } from 'lucide-react';
+import { LayoutDashboard, Users, CreditCard, Calculator, FileText, LogOut, Shield, Download, KeyRound } from 'lucide-react';
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard', end: true },
   { to: '/customers', icon: Users, label: 'Customers' },
   { to: '/payments', icon: CreditCard, label: 'Payments' },
+  { to: '/customer-accounts', icon: KeyRound, label: 'Accounts' },
   { to: '/calculator', icon: Calculator, label: 'Calculator' },
   { to: '/reports', icon: FileText, label: 'Reports' },
 ];

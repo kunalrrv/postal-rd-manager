@@ -48,12 +48,17 @@ class PasswordReset(BaseModel):
     email: str
     new_password: str
 
+class CustomerAccountCreate(BaseModel):
+    customer_id: str
+    username: str
+    password: str
+
 class CustomerCreate(BaseModel):
     name: str
     age: int
     monthly_amount: float
     tenure: int
-    interest_rate: float = 7.6
+    interest_rate: float = 6.7
     start_date: str
 
 class CustomerUpdate(BaseModel):
@@ -72,7 +77,7 @@ class PaymentUpdate(BaseModel):
 class CalculatorInput(BaseModel):
     monthly_deposit: float
     tenure_years: int
-    annual_rate: float = 7.6
+    annual_rate: float = 6.7
 
 
 # ==================== UTILITIES ====================
@@ -83,10 +88,11 @@ def hash_password(password: str) -> str:
 def verify_password(password: str, hashed: str) -> bool:
     return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
 
-def create_token(user_id: str, username: str) -> str:
+def create_token(user_id: str, username: str, role: str = "admin") -> str:
     payload = {
         "user_id": user_id,
         "username": username,
+        "role": role,
         "exp": datetime.now(timezone.utc) + timedelta(hours=24)
     }
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
@@ -99,6 +105,11 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         raise HTTPException(status_code=401, detail="Token expired")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
+
+async def require_admin(user=Depends(get_current_user)):
+    if user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return user
 
 def add_months(date_str: str, months: int) -> str:
     dt = datetime.fromisoformat(date_str.split('T')[0])
@@ -149,6 +160,7 @@ async def register(user: UserRegister):
         "username": user.username,
         "password": hash_password(user.password),
         "email": user.email or "",
+        "role": "admin",
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     await db.users.insert_one(user_doc)
@@ -174,12 +186,23 @@ async def login(user: UserLogin):
     db_user = await db.users.find_one({"username": user.username}, {"_id": 0})
     if not db_user or not verify_password(user.password, db_user['password']):
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    token = create_token(db_user['id'], db_user['username'])
-    return {"token": token, "username": db_user['username']}
+    role = db_user.get('role', 'admin')
+    token = create_token(db_user['id'], db_user['username'], role)
+    response = {"token": token, "username": db_user['username'], "role": role}
+    if role == "customer":
+        response["customer_id"] = db_user.get("customer_id", "")
+    return response
 
 @api_router.get("/auth/me")
 async def get_me(user=Depends(get_current_user)):
-    return {"user_id": user['user_id'], "username": user['username']}
+    db_user = await db.users.find_one({"user_id": user['user_id']}, {"_id": 0})
+    if not db_user:
+        db_user = await db.users.find_one({"id": user['user_id']}, {"_id": 0})
+    role = user.get('role', 'admin')
+    result = {"user_id": user['user_id'], "username": user['username'], "role": role}
+    if role == "customer" and db_user:
+        result["customer_id"] = db_user.get("customer_id", "")
+    return result
 
 
 # ==================== CUSTOMER ROUTES ====================
@@ -196,7 +219,7 @@ async def import_customers(data: dict, user=Depends(get_current_user)):
             age = int(c.get("age", 0))
             monthly_amount = float(c.get("monthly_amount", 0))
             tenure = int(c.get("tenure", 5))
-            interest_rate = float(c.get("interest_rate", 7.6))
+            interest_rate = float(c.get("interest_rate", 6.7))
             start_date = str(c.get("start_date", "")).strip()
             if not name:
                 results["failed"] += 1
@@ -511,6 +534,91 @@ async def calculate(calc_input: CalculatorInput):
     return result
 
 
+# ==================== ADMIN: CUSTOMER ACCOUNTS ====================
+
+@api_router.post("/admin/customer-accounts")
+async def create_customer_account(data: CustomerAccountCreate, user=Depends(require_admin)):
+    customer = await db.customers.find_one({"id": data.customer_id}, {"_id": 0})
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    existing_user = await db.users.find_one({"username": data.username})
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Username already exists")
+    existing_account = await db.users.find_one({"customer_id": data.customer_id, "role": "customer"})
+    if existing_account:
+        raise HTTPException(status_code=400, detail="This customer already has an account")
+    if len(data.username) < 3:
+        raise HTTPException(status_code=400, detail="Username must be at least 3 characters")
+    if len(data.password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+    user_doc = {
+        "id": str(uuid.uuid4()),
+        "username": data.username,
+        "password": hash_password(data.password),
+        "email": "",
+        "role": "customer",
+        "customer_id": data.customer_id,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.users.insert_one(user_doc)
+    return {
+        "message": f"Account created for {customer['name']}",
+        "username": data.username,
+        "customer_name": customer["name"]
+    }
+
+@api_router.get("/admin/customer-accounts")
+async def list_customer_accounts(user=Depends(require_admin)):
+    accounts = await db.users.find({"role": "customer"}, {"_id": 0, "password": 0}).to_list(1000)
+    return accounts
+
+@api_router.delete("/admin/customer-accounts/{account_id}")
+async def delete_customer_account(account_id: str, user=Depends(require_admin)):
+    result = await db.users.delete_one({"id": account_id, "role": "customer"})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Account not found")
+    return {"message": "Customer account deleted"}
+
+
+# ==================== CUSTOMER DASHBOARD ====================
+
+@api_router.get("/customer/dashboard")
+async def get_customer_dashboard(user=Depends(get_current_user)):
+    if user.get("role") != "customer":
+        raise HTTPException(status_code=403, detail="Customer access only")
+    db_user = await db.users.find_one({"id": user['user_id']}, {"_id": 0})
+    if not db_user or not db_user.get("customer_id"):
+        raise HTTPException(status_code=404, detail="Customer profile not linked")
+    customer_id = db_user["customer_id"]
+    customer = await db.customers.find_one({"id": customer_id}, {"_id": 0})
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer record not found")
+    payments = await db.payments.find(
+        {"customer_id": customer_id}, {"_id": 0}
+    ).sort("due_date", 1).to_list(500)
+    paid_payments = [p for p in payments if p["status"] == "Paid"]
+    unpaid_payments = [p for p in payments if p["status"] == "Unpaid"]
+    total_paid = sum(p.get("amount_paid", 0) for p in paid_payments)
+    next_payment = unpaid_payments[0] if unpaid_payments else None
+    now = datetime.now(timezone.utc).isoformat()
+    overdue_payments = [p for p in unpaid_payments if p.get("due_date", "") < now]
+    return {
+        "customer": customer,
+        "payments": payments,
+        "summary": {
+            "total_payments": len(payments),
+            "paid_count": len(paid_payments),
+            "unpaid_count": len(unpaid_payments),
+            "overdue_count": len(overdue_payments),
+            "total_paid_amount": round(total_paid, 2),
+            "total_deposit_expected": customer.get("total_deposit", 0),
+            "maturity_amount": customer.get("maturity_amount", 0),
+            "interest_rate": customer.get("interest_rate", 6.7),
+            "next_payment": next_payment,
+        }
+    }
+
+
 # ==================== STARTUP ====================
 
 @app.on_event("startup")
@@ -528,10 +636,18 @@ async def startup():
             "id": str(uuid.uuid4()),
             "username": "admin",
             "password": hash_password("admin123"),
+            "role": "admin",
             "created_at": datetime.now(timezone.utc).isoformat()
         }
         await db.users.insert_one(admin_doc)
         logger.info("Default admin user created (admin/admin123)")
+    else:
+        if not admin.get("role"):
+            await db.users.update_many(
+                {"role": {"$exists": False}},
+                {"$set": {"role": "admin"}}
+            )
+            logger.info("Updated existing users with admin role")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():

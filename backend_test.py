@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 from typing import Dict, Any, List
 
 class RDAPITester:
-    def __init__(self, base_url: str = "https://postal-rd-manager.preview.emergentagent.com"):
+    def __init__(self, base_url: str = "https://deposit-manager-pro-1.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_base = f"{base_url}/api"
         self.token = None
