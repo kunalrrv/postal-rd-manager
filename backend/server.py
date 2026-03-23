@@ -619,6 +619,27 @@ async def get_customer_dashboard(user=Depends(get_current_user)):
     }
 
 
+# ==================== ADMIN: MIGRATE INTEREST RATE ====================
+
+@api_router.post("/admin/migrate-rate")
+async def migrate_interest_rate(user=Depends(require_admin)):
+    new_rate = 6.7
+    customers = await db.customers.find({"interest_rate": {"$ne": new_rate}}, {"_id": 0}).to_list(1000)
+    updated = 0
+    for c in customers:
+        maturity = calculate_rd_maturity(c["monthly_amount"], c["tenure"], new_rate)
+        maturity_date = add_months(c["start_date"], c["tenure"] * 12)
+        await db.customers.update_one({"id": c["id"]}, {"$set": {
+            "interest_rate": new_rate,
+            "maturity_date": maturity_date,
+            "maturity_amount": maturity["maturity_amount"],
+            "total_deposit": maturity["total_deposit"],
+            "total_interest": maturity["total_interest"],
+        }})
+        updated += 1
+    return {"message": f"Updated {updated} customer(s) to {new_rate}% interest rate"}
+
+
 # ==================== STARTUP ====================
 
 @app.on_event("startup")
